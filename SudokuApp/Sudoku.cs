@@ -34,7 +34,7 @@ namespace Sudoku
                 Blocks[i] = new SudokuBlock[n];
                 for (int j = 0; j < Blocks[i].Length; j++)
                 {
-                    Blocks[i][j] = new SudokuBlock(i, j, this);
+                    Blocks[i][j] = new SudokuBlock(n, i, j, this);
                 }
             }
             for (int i = 0; i < Blocks.Length; i++)
@@ -343,7 +343,7 @@ namespace Sudoku
         {
             bool rtVal = false;
             rtVal = Rows.All(x => x.IsComplete());
-            rtVal = Columns.All(x => x.IsComplete());
+            rtVal &= Columns.All(x => x.IsComplete());
             return rtVal;
         }
 
