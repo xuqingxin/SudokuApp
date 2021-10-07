@@ -123,7 +123,7 @@ namespace Sudoku
 
         public bool GetNextNumber()
         {
-            return TryRows() || TryColumns() || TryBlocks() || Try3Rows() || Try3Columns();
+            return TryRows() || TryColumns() || TryBlocks() || TryNRows() || TryNColumns();
         }
 
         public bool GetNextNumber2()
@@ -179,12 +179,12 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool Try3Rows()
+        public bool TryNRows()
         {
             bool rtVal = false;
             for (int i = 0; i < n; i++)
             {
-                rtVal |= Try3Rows(i);
+                rtVal |= TryNRows(i);
                 if (rtVal)
                 {
                     return rtVal;
@@ -193,7 +193,7 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool Try3Rows(int i)
+        public bool TryNRows(int i)
         {
             bool rtVal = false;
             SudokuBlock[] blocks = new SudokuBlock[n];
@@ -208,7 +208,7 @@ namespace Sudoku
             }
             for (int k = 1; k <= n2; k++)
             {
-                rtVal |= Try3RowsWithValue(blocks, rows, k);
+                rtVal |= TryNRowsWithValue(blocks, rows, k);
                 if (rtVal)
                 {
                     return rtVal;
@@ -217,7 +217,7 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool Try3RowsWithValue(SudokuBlock[] blocks, SudokuRow[] rows, int v)
+        public bool TryNRowsWithValue(SudokuBlock[] blocks, SudokuRow[] rows, int v)
         {
             bool rtVal = false;
             SudokuItem[] items = new SudokuItem[n];
@@ -259,12 +259,12 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool Try3Columns()
+        public bool TryNColumns()
         {
             bool rtVal = false;
             for (int j = 0; j < n; j++)
             {
-                rtVal |= Try3Columns(j);
+                rtVal |= TryNColumns(j);
                 if (rtVal)
                 {
                     return rtVal;
@@ -273,7 +273,7 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool Try3Columns(int j)
+        public bool TryNColumns(int j)
         {
             bool rtVal = false;
             SudokuBlock[] blocks = new SudokuBlock[n];
@@ -288,7 +288,7 @@ namespace Sudoku
             }
             for (int k = 1; k <= n2; k++)
             {
-                rtVal |= Try3ColumnsWithValue(blocks, columns, k);
+                rtVal |= TryNColumnsWithValue(blocks, columns, k);
                 if (rtVal)
                 {
                     return rtVal;
@@ -297,7 +297,7 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool Try3ColumnsWithValue(SudokuBlock[] blocks, SudokuColumn[] columns, int v)
+        public bool TryNColumnsWithValue(SudokuBlock[] blocks, SudokuColumn[] columns, int v)
         {
             bool rtVal = false;
             SudokuItem[] items = new SudokuItem[n];
@@ -354,7 +354,7 @@ namespace Sudoku
             {
                 for (int j = 0; j < n2; j++)
                 {
-                    string strNumber = Items[i][j].value == 0 ? " " : Items[i][j].value.ToString();
+                    string strNumber = Items[j][i].value == 0 ? " " : Items[j][i].value.ToString();
                     builder.Append($"{strNumber:D1} ");
                     if (j > 0 && (j + 1) % n == 0 && j < n2 - 1)
                     {
@@ -408,7 +408,7 @@ namespace Sudoku
                     {
                         if (int.TryParse(parts[j], out int v))
                         {
-                            Items[i][j].SetValue(v);
+                            Items[j][i].SetValue(v);
                         }
                     }
                 }
