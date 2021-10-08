@@ -12,16 +12,16 @@ namespace Sudoku
         {
         }
 
-        public SudokuRow(int n, int i, Sudoku sudoku)
+        public SudokuRow(int n2, int i, Sudoku sudoku)
         {
-            this.n = n;
+            this.n2 = n2;
             this.i = i;
             this.Sudoku = sudoku;
-            Sum = Sudoku.GetSum(n);
-            Items = new SudokuItem[n];
+            Sum = Sudoku.GetSum(n2);
+            Items = new SudokuItem[n2];
         }
 
-        public int n { get; }
+        public int n2 { get; }
 
         public int i { get; }
 
@@ -34,7 +34,7 @@ namespace Sudoku
         public bool IsComplete()
         {
             bool rtVal = false;
-            int[] numbers = new int[n];
+            int[] numbers = new int[n2];
             foreach (SudokuItem item in Items)
             {
                 if (item.value > 0)
@@ -49,7 +49,7 @@ namespace Sudoku
         public bool TryComplete()
         {
             bool rtVal = false;
-            int[] numbers = new int[n];
+            int[] numbers = new int[n2];
             foreach (SudokuItem item in Items)
             {
                 if (item.value > 0)
@@ -66,7 +66,7 @@ namespace Sudoku
                 }
             }
             List<int> candiateIndex = new List<int>();
-            for (int k = 0; k < n; k++)
+            for (int k = 0; k < n2; k++)
             {
                 SudokuItem item = Items[k];
                 if (item.value == 0)
@@ -77,7 +77,11 @@ namespace Sudoku
             rtVal = TryComplete(candiateNumbers, candiateIndex);
             if (!rtVal)
             {
-                //rtVal = TryCompleteByCandidates();
+                rtVal = TryHiddenSingles();
+            }
+            if (!rtVal)
+            {
+                rtVal |= TryNakedPairs();
             }
             return rtVal;
         }
@@ -128,11 +132,11 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool TryCompleteByCandidates()
+        public bool TryHiddenSingles()
         {
             bool rtVal = false;
             Dictionary<int, int> candidates = new Dictionary<int, int>();
-            for (int k = 1; k <= n; k++)
+            for (int k = 1; k <= n2; k++)
             {
                 candidates[k] = 0;
             }
@@ -140,6 +144,13 @@ namespace Sudoku
             {
                 if (item.value == 0)
                 {
+                    if (item.HasSingleCandidate(out int c))
+                    {
+                        item.SetValue(c);
+                        rtVal = true;
+                        return rtVal;
+                    }
+
                     for (int k = 1; k < item.Candidates.Length; k++)
                     {
                         if (item.Candidates[k])
@@ -160,6 +171,68 @@ namespace Sudoku
                         {
                             item.SetValue(pair.Key);
                             break;
+                        }
+                    }
+                }
+            }
+            return rtVal;
+        }
+
+        public bool TryNakedPairs()
+        {
+            bool rtVal = false;
+            for (int k = 0; k < n2 - 1; k++)
+            {
+                SudokuItem item = Items[k];
+                if (item.value > 0)
+                {
+                    continue;
+                }
+                List<int> lst = new List<int>();
+                for (int idx = 1; idx < item.Candidates.Length; idx++)
+                {
+                    if (item.Candidates[idx])
+                    {
+                        lst.Add(idx);
+                    }
+                }
+
+                if (lst.Count == 2)
+                {
+                    for (int l = k + 1; l < n2; l++)
+                    {
+                        SudokuItem item2 = Items[l];
+                        if (item.value == 0 && item.HasSameCandidates(item2))
+                        {
+                            // 清楚行中的候选项
+                            for (int m = 0; m < n2; m++)
+                            {
+                                if (m == k || m == l)
+                                {
+                                    continue;
+                                }
+                                SudokuItem item3 = Items[m];
+                                if (item3.value == 0)
+                                {
+                                    rtVal = item3.ClearCandidates(lst);
+                                    if (rtVal)
+                                    {
+                                        return rtVal;
+                                    }
+                                }
+                            }
+
+                            // 清楚区块中的候选项
+                            SudokuBlock block = Sudoku.GetBlock(item.i, item.j);
+                            SudokuBlock block2 = Sudoku.GetBlock(item2.i, item2.j);
+                            if (block == block2)
+                            {
+                                rtVal = block.ClearCandidates(lst, new SudokuItem[] { item, item2 });
+                                if (rtVal)
+                                {
+                                    return rtVal;
+                                }
+                            }
                         }
                     }
                 }

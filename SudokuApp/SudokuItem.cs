@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -51,6 +52,20 @@ namespace Sudoku
             Candidates[c] = false;
         }
 
+        public bool ClearCandidates(IEnumerable<int> lst)
+        {
+            bool rtVal = false;
+            foreach (int c in lst)
+            {
+                if (Candidates[c])
+                {
+                    Candidates[c] = false;
+                    rtVal = true;
+                }
+            }
+            return rtVal;
+        }
+
         public void ClearCandidates()
         {
             for (int i = 1; i < Candidates.Length; i++)
@@ -87,6 +102,58 @@ namespace Sudoku
         {
             value = 0;
             ResetCandidates();
+        }
+
+        public bool HasSameCandidates(SudokuItem item)
+        {
+            bool rtVal = false;
+            if (item != null)
+            {
+                List<int> lst = new List<int>();
+                for (int k = 1; k < Candidates.Length; k++)
+                {
+                    if (Candidates[k])
+                    {
+                        lst.Add(k);
+                    }
+                }
+                for (int k = 1; k < item.Candidates.Length; k++)
+                {
+                    if (item.Candidates[k])
+                    {
+                        if (lst.Contains(k))
+                        {
+                            lst.Remove(k);
+                        }
+                        else
+                        {
+                            return rtVal;
+                        }
+                    }
+                }
+                rtVal = lst.Count == 0;
+            }
+            return rtVal;
+        }
+
+        public bool HasSingleCandidate(out int c)
+        {
+            bool rtVal = false;
+            c = 0;
+            List<int> lst = new List<int>();
+            for (int k = 1; k < Candidates.Length; k++)
+            {
+                if (Candidates[k])
+                {
+                    lst.Add(k);
+                }
+            }
+            if (lst.Count == 1)
+            {
+                c = lst[0];
+                rtVal = true;
+            }
+            return rtVal;
         }
 
         public override string ToString()

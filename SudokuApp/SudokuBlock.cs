@@ -47,6 +47,31 @@ namespace Sudoku
             }
         }
 
+        public bool ClearCandidates(IEnumerable<int> lst, IEnumerable<SudokuItem> excludeList)
+        {
+            bool rtVal = false;
+            for (int k = 0; k < n; k++)
+            {
+                for (int l = 0; l < n; l++)
+                {
+                    SudokuItem item = Items[k][l];
+                    if (item.value > 0)
+                    {
+                        continue;
+                    }
+                    if (excludeList == null)
+                    {
+                        rtVal |= item.ClearCandidates(lst);
+                    }
+                    else if (!excludeList.Contains(item))
+                    {
+                        rtVal |= item.ClearCandidates(lst);
+                    }
+                }
+            }
+            return rtVal;
+        }
+
         public bool IsComplete()
         {
             bool rtVal = false;
@@ -97,14 +122,18 @@ namespace Sudoku
                     SudokuItem item = Items[k][l];
                     if (item.value == 0)
                     {
-                        candiateIndex.Add(Tuple.Create(k, l));
+                        candiateIndex.Add(Tuple.Create(l, k));
                     }
                 }
             }
             rtVal = TryComplete(candiateNumbers, candiateIndex);
             if (!rtVal)
             {
-                //rtVal = TryCompleteByCandidates();
+                rtVal = TryHiddenSingles();
+            }
+            if (!rtVal)
+            {
+                rtVal |= TryNakedTriples();
             }
             return rtVal;
         }
@@ -117,12 +146,12 @@ namespace Sudoku
                 List<Tuple<int, int>> excludeList = new List<Tuple<int, int>>();
                 foreach (var idx in candidateIndex)
                 {
-                    SudokuRow row = Sudoku.Rows[i * n + idx.Item2];
+                    SudokuRow row = Sudoku.Rows[j * n + idx.Item2];
                     if (row.GetItemByValue(number) != null)
                     {
                         excludeList.Add(idx);
                     }
-                    SudokuColumn column = Sudoku.Columns[j * n + idx.Item1];
+                    SudokuColumn column = Sudoku.Columns[i * n + idx.Item1];
                     if (column.GetItemByValue(number) != null && !excludeList.Contains(idx))
                     {
                         excludeList.Add(idx);
@@ -132,7 +161,7 @@ namespace Sudoku
                 if (result.Count() == 1)
                 {
                     Tuple<int, int> tuple = result.First();
-                    Items[tuple.Item1][tuple.Item2].SetValue(number);
+                    Items[tuple.Item2][tuple.Item1].SetValue(number);
                     rtVal = true;
                     return rtVal;
                 }
@@ -143,12 +172,12 @@ namespace Sudoku
                 List<int> excludeList = new List<int>();
                 foreach (int number in candiateNumbers)
                 {
-                    SudokuRow row = Sudoku.Rows[i * n + idx.Item1];
+                    SudokuRow row = Sudoku.Rows[j * n + idx.Item2];
                     if (row.GetItemByValue(number) != null)
                     {
                         excludeList.Add(number);
                     }
-                    SudokuColumn column = Sudoku.Columns[j * n + idx.Item2];
+                    SudokuColumn column = Sudoku.Columns[i * n + idx.Item1];
                     if (column.GetItemByValue(number) != null && !excludeList.Contains(number))
                     {
                         excludeList.Add(number);
@@ -157,7 +186,7 @@ namespace Sudoku
                 var result = candiateNumbers.Except(excludeList);
                 if (result.Count() == 1)
                 {
-                    Items[idx.Item1][idx.Item2].SetValue(result.First());
+                    Items[idx.Item2][idx.Item1].SetValue(result.First());
                     rtVal = true;
                     return rtVal;
                 }
@@ -165,14 +194,14 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool TryRowCompleteWithValue(int i, int v)
+        public bool TryRowCompleteWithValue(int rowIndex, int v)
         {
             bool rtVal = false;
             List<int> candiateColumns = new List<int>();
             List<int> excludeColumns = new List<int>();
             for (int k = 0; k < n; k++)
             {
-                SudokuItem item = Items[i][k];
+                SudokuItem item = Items[rowIndex][k];
                 if (item.value == 0)
                 {
                     candiateColumns.Add(k);
@@ -180,7 +209,7 @@ namespace Sudoku
             }
             foreach (int clmn in candiateColumns)
             {
-                SudokuColumn column = Sudoku.Columns[j * n + clmn];
+                SudokuColumn column = Sudoku.Columns[i * n + clmn];
                 if (column.GetItemByValue(v) != null)
                 {
                     excludeColumns.Add(clmn);
@@ -189,20 +218,20 @@ namespace Sudoku
             var result = candiateColumns.Except(excludeColumns);
             if (result.Count() == 1)
             {
-                Items[i][result.First()].SetValue(v);
+                Items[rowIndex][result.First()].SetValue(v);
                 rtVal = true;
             }
             return rtVal;
         }
 
-        public bool TryColumnCompleteWithValue(int j, int v)
+        public bool TryColumnCompleteWithValue(int colIndex, int v)
         {
             bool rtVal = false;
             List<int> candiateRows = new List<int>();
             List<int> excludeRows = new List<int>();
             for (int k = 0; k < n; k++)
             {
-                SudokuItem item = Items[k][j];
+                SudokuItem item = Items[k][colIndex];
                 if (item.value == 0)
                 {
                     candiateRows.Add(k);
@@ -210,7 +239,7 @@ namespace Sudoku
             }
             foreach (int rw in candiateRows)
             {
-                SudokuRow row = Sudoku.Rows[this.i * n + rw];
+                SudokuRow row = Sudoku.Rows[j * n + rw];
                 if (row.GetItemByValue(v) != null)
                 {
                     excludeRows.Add(rw);
@@ -219,13 +248,13 @@ namespace Sudoku
             var result = candiateRows.Except(excludeRows);
             if (result.Count() == 1)
             {
-                Items[result.First()][j].SetValue(v);
+                Items[result.First()][colIndex].SetValue(v);
                 rtVal = true;
             }
             return rtVal;
         }
 
-        public bool TryCompleteByCandidates()
+        public bool TryHiddenSingles()
         {
             bool rtVal = false;
             Dictionary<int, int> candidates = new Dictionary<int, int>();
@@ -240,6 +269,13 @@ namespace Sudoku
                     SudokuItem item = Items[k][l];
                     if (item.value == 0)
                     {
+                        if (item.HasSingleCandidate(out int c))
+                        {
+                            item.SetValue(c);
+                            rtVal = true;
+                            return rtVal;
+                        }
+
                         for (int m = 1; m < item.Candidates.Length; m++)
                         {
                             if (item.Candidates[m])
@@ -269,6 +305,13 @@ namespace Sudoku
                     }
                 }
             }
+            return rtVal;
+        }
+
+        public bool TryNakedTriples()
+        {
+            bool rtVal = false;
+            //TODO: Implement TryNakedTriples
             return rtVal;
         }
 

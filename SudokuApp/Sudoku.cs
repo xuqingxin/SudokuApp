@@ -199,7 +199,7 @@ namespace Sudoku
             SudokuBlock[] blocks = new SudokuBlock[n];
             for (int k = 0; k < n; k++)
             {
-                blocks[k] = Blocks[i][k];
+                blocks[k] = Blocks[k][i];
             }
             SudokuRow[] rows = new SudokuRow[n];
             for (int k = 0; k < n; k++)
@@ -239,7 +239,7 @@ namespace Sudoku
                     else
                     {
                         SudokuBlock tempBlock = GetBlock(items[i].i, items[i].j);
-                        blockIndex[tempBlock.j] = 1;
+                        blockIndex[tempBlock.i] = 1;
                     }
                 }
                 SudokuBlock block = null;
@@ -279,7 +279,7 @@ namespace Sudoku
             SudokuBlock[] blocks = new SudokuBlock[n];
             for (int k = 0; k < n; k++)
             {
-                blocks[k] = Blocks[k][j];
+                blocks[k] = Blocks[j][k];
             }
             SudokuColumn[] columns = new SudokuColumn[n];
             for (int k = 0; k < n; k++)
@@ -319,7 +319,7 @@ namespace Sudoku
                     else
                     {
                         SudokuBlock tempBlock = GetBlock(items[i].i, items[i].j);
-                        blockIndex[tempBlock.i] = 1;
+                        blockIndex[tempBlock.j] = 1;
                     }
                 }
                 SudokuBlock block = null;
