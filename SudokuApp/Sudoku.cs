@@ -371,6 +371,21 @@ namespace Sudoku
             return builder.ToString();
         }
 
+        public string Print2StringBy0()
+        {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < n2; i++)
+            {
+                for (int j = 0; j < n2; j++)
+                {
+                    builder.Append($"{Items[j][i].value} ");
+                }
+                builder.AppendLine();
+            }
+            builder.AppendLine("");
+            return builder.ToString();
+        }
+
         public void Print()
         {
             Console.WriteLine(Print2String());
@@ -423,6 +438,11 @@ namespace Sudoku
         public void Save(string filename)
         {
             File.WriteAllText(filename, Print2String());
+        }
+
+        public void SaveBy0(string filename)
+        {
+            File.WriteAllText(filename, Print2StringBy0());
         }
     }
 }

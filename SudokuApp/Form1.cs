@@ -26,8 +26,8 @@ namespace Sudoku
         {
             List<int> rows = new List<int>();
             List<int> cols = new List<int>();
-            Bitmap bmp = (Bitmap)Image.FromFile("Sudoku.bmp");
-            if (bmp.PixelFormat == PixelFormat.Format32bppRgb)
+            Bitmap bmp = (Bitmap)Image.FromFile("Sudoku.png");
+            if (bmp.PixelFormat == PixelFormat.Format32bppArgb)
             {
                 ImageUtility.ARGB2Gray(ref bmp);
             }
@@ -35,10 +35,7 @@ namespace Sudoku
             {
                 ImageUtility.RGB2Gray(ref bmp);
             }
-
-            Bitmap mono = ImageUtility.Gray2Mono(bmp);
-            bmp.Dispose();
-            bmp = mono;
+            ImageUtility.Gray2Mono(ref bmp);
             BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
             int length = bmpData.Stride * bmp.Height;
             byte[] byteData = new byte[length];
@@ -86,6 +83,23 @@ namespace Sudoku
                 rowData[rowData.Count].Add(rows[k]);
             }
 
+            // 去除干扰点的影响
+            int rowSum = 0;
+            foreach (var pair in rowData)
+            {
+                rowSum += pair.Value.Count();
+            }
+            int rowAvg = rowSum / rowData.Count;
+            int[] rowKeys = rowData.Keys.ToArray();
+            for (int i = 0; i < rowKeys.Length; i++)
+            {
+                if (rowData[rowKeys[i]].Count < rowAvg)
+                {
+                    rowData.Remove(rowKeys[i]);
+                }
+            }
+            rowKeys = rowData.Keys.ToArray();
+
             int lastCol = 0;
             for (int j = 0; j < cols.Count - 1; j++)
             {
@@ -106,12 +120,30 @@ namespace Sudoku
                 colData[colData.Count].Add(cols[k]);
             }
 
+            // 去除干扰点的影响
+            int colSum = 0;
+            foreach (var pair in colData)
+            {
+                colSum += pair.Value.Count();
+            }
+            int colAvg = colSum / colData.Count;
+            int[] colKeys = colData.Keys.ToArray();
+            for (int i = 0; i < colKeys.Length; i++)
+            {
+                if (colData[colKeys[i]].Count < colAvg)
+                {
+                    colData.Remove(colKeys[i]);
+                }
+            }
+            colKeys = colData.Keys.ToArray();
+
+            // 计算数字中心点
             int margin = 8;
             int[] cxs = new int[colData.Count];
             int[] dxs = new int[colData.Count];
-            for (int i = 0; i < colData.Count; i++)
+            for (int i = 0; i < colKeys.Length; i++)
             {
-                List<int> lst = colData[i + 1];
+                List<int> lst = colData[colKeys[i]];
                 cxs[i] = lst[lst.Count / 2];
                 dxs[i] = lst[lst.Count - 1] - lst[0];
             }
@@ -119,17 +151,16 @@ namespace Sudoku
 
             int[] cys = new int[rowData.Count];
             int[] dys = new int[rowData.Count];
-            for (int i = 0; i < rowData.Count; i++)
+            for (int i = 0; i < rowKeys.Length; i++)
             {
-                List<int> lst = rowData[i + 1];
+                List<int> lst = rowData[rowKeys[i]];
                 cys[i] = lst[lst.Count / 2];
                 dys[i] = lst[lst.Count - 1] - lst[0];
             }
             int dy = dys.Max() + margin;
 
             sudoku.Reset();
-
-            Bitmap img = bmp;// (Bitmap)Image.FromFile("Sudoku.bmp");
+            Bitmap img = bmp;
             for (int j = 0; j < dys.Length; j++)
             {
                 for (int i = 0; i < dxs.Length; i++)
@@ -150,10 +181,10 @@ namespace Sudoku
                     }
                 }
             }
-            OcrUtility.Instance.Uninit();
             img.Dispose();
 
             sudoku.Print();
+            sudoku.SaveBy0("Sudoku.txt");
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -188,6 +219,11 @@ namespace Sudoku
             {
                 sudoku.Print();
             }
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            OcrUtility.Instance.Uninit();
         }
     }
 }

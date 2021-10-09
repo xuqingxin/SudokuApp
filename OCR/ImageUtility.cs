@@ -19,7 +19,76 @@ namespace OCR
 
         public static Bitmap ARGB2Gray(Bitmap srcBitmap)
         {
-            return null;
+            // check pixel format
+
+            if (srcBitmap.PixelFormat != PixelFormat.Format32bppArgb)
+                throw new ArgumentException();
+
+            int width = srcBitmap.Width;
+
+            int height = srcBitmap.Height;
+
+            Rectangle rect = new Rectangle(0, 0, width, height);
+
+            //将Bitmap锁定到系统内存中,获得BitmapData
+
+            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, srcBitmap.PixelFormat);
+
+            //创建Bitmap
+
+            Bitmap dstBitmap = CreateGrayscaleImage(width, height);//这个函数在后面有定义
+
+            BitmapData dstBmData = dstBitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
+
+            //位图中第一个像素数据的地址。它也可以看成是位图中的第一个扫描行
+
+            System.IntPtr srcPtr = srcBmData.Scan0;
+
+            System.IntPtr dstPtr = dstBmData.Scan0;
+
+            //将Bitmap对象的信息存放到byte数组中
+
+            int src_bytes = srcBmData.Stride * height;
+
+            byte[] srcValues = new byte[src_bytes];
+
+            int dst_bytes = dstBmData.Stride * height;
+
+            byte[] dstValues = new byte[dst_bytes];
+
+            //复制GRB信息到byte数组
+
+            System.Runtime.InteropServices.Marshal.Copy(srcPtr, srcValues, 0, src_bytes);
+
+            System.Runtime.InteropServices.Marshal.Copy(dstPtr, dstValues, 0, dst_bytes);
+
+            //根据Y=0.299*R+0.587G+0.114*B,Y为亮度
+
+            for (int i = 0; i < height; i++)
+
+                for (int j = 0; j < width; j++)
+
+                {
+                    //只处理每行中图像像素数据,舍弃未用空间
+
+                    //注意位图结构中RGB按BGR的顺序存储
+
+                    int k = 4 * j;
+
+                    byte temp = (byte)(srcValues[i * srcBmData.Stride + k + 2] * .299 + srcValues[i * srcBmData.Stride + k + 1] * .587 + srcValues[i * srcBmData.Stride + k] * .114);
+
+                    dstValues[i * dstBmData.Stride + j] = temp;
+                }
+
+            System.Runtime.InteropServices.Marshal.Copy(dstValues, 0, dstPtr, dst_bytes);
+
+            //解锁位图
+
+            srcBitmap.UnlockBits(srcBmData);
+
+            dstBitmap.UnlockBits(dstBmData);
+
+            return dstBitmap;
         }
 
         public static void RGB2Gray(ref Bitmap srcBitmap)
@@ -31,6 +100,11 @@ namespace OCR
 
         public static Bitmap RGB2Gray(Bitmap srcBitmap)
         {
+            // check pixel format
+
+            if (srcBitmap.PixelFormat != PixelFormat.Format24bppRgb)
+                throw new ArgumentException();
+
             int width = srcBitmap.Width;
 
             int height = srcBitmap.Height;
@@ -39,7 +113,7 @@ namespace OCR
 
             //将Bitmap锁定到系统内存中,获得BitmapData
 
-            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, srcBitmap.PixelFormat);
 
             //创建Bitmap
 
@@ -113,7 +187,7 @@ namespace OCR
 
             //将Bitmap锁定到系统内存中,获得BitmapData
 
-            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
+            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, srcBitmap.PixelFormat);
 
             System.IntPtr srcPtr = srcBmData.Scan0;
 
@@ -152,7 +226,7 @@ namespace OCR
 
             //将Bitmap锁定到系统内存中,获得BitmapData
 
-            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
+            BitmapData srcBmData = srcBitmap.LockBits(rect, ImageLockMode.ReadWrite, srcBitmap.PixelFormat);
 
             //创建Bitmap
 
