@@ -98,6 +98,19 @@ namespace Sudoku
             }
         }
 
+        public int[] GetCandidateNumbers()
+        {
+            List<int> lst = new List<int>();
+            for (int i = 1; i < Candidates.Length; i++)
+            {
+                if (Candidates[i])
+                {
+                    lst.Add(i);
+                }
+            }
+            return lst.ToArray();
+        }
+
         public void Reset()
         {
             value = 0;

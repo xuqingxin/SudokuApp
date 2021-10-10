@@ -74,15 +74,7 @@ namespace Sudoku
                     candiateIndex.Add(k);
                 }
             }
-            rtVal = TryComplete(candiateNumbers, candiateIndex);
-            if (!rtVal)
-            {
-                rtVal = TryHiddenSingles();
-            }
-            if (!rtVal)
-            {
-                rtVal |= TryNakedPairs();
-            }
+            rtVal = TryComplete(candiateNumbers, candiateIndex) || TryHiddenSingles() || TryNakedPairs() || TryNakedTriples();
             return rtVal;
         }
 
@@ -214,11 +206,7 @@ namespace Sudoku
                                 SudokuItem item3 = Items[m];
                                 if (item3.value == 0)
                                 {
-                                    rtVal = item3.ClearCandidates(lst);
-                                    if (rtVal)
-                                    {
-                                        return rtVal;
-                                    }
+                                    rtVal |= item3.ClearCandidates(lst);
                                 }
                             }
 
@@ -227,16 +215,103 @@ namespace Sudoku
                             SudokuBlock block2 = Sudoku.GetBlock(item2.i, item2.j);
                             if (block == block2)
                             {
-                                rtVal = block.ClearCandidates(lst, new SudokuItem[] { item, item2 });
-                                if (rtVal)
-                                {
-                                    return rtVal;
-                                }
+                                rtVal |= block.ClearCandidates(lst, new SudokuItem[] { item, item2 });
+                            }
+
+                            if (rtVal)
+                            {
+                                return rtVal;
                             }
                         }
                     }
                 }
             }
+            return rtVal;
+        }
+
+        public bool TryNakedTriples()
+        {
+            bool rtVal = false;
+            List<int> lstColIndex = new List<int>();
+            for (int k = 0; k < n2; k++)
+            {
+                SudokuItem item = Items[k];
+                if (item.value > 0)
+                {
+                    continue;
+                }
+                int count = item.GetCandidateNumbers().Length;
+                if (count == 2 || count == 3)
+                {
+                    lstColIndex.Add(k);
+                }
+            }
+
+            for (int l = 0; l < lstColIndex.Count - 2; l++)
+            {
+                SudokuItem item1 = Items[lstColIndex[l]];
+                int[] c1 = item1.GetCandidateNumbers();
+                HashSet<int> s1 = new HashSet<int>(c1);
+
+                for (int m = l + 1; m < lstColIndex.Count - 1; m++)
+                {
+                    SudokuItem item2 = Items[lstColIndex[m]];
+                    int[] c2 = item2.GetCandidateNumbers();
+                    HashSet<int> s2 = new HashSet<int>(s1);
+                    foreach (int c in c2)
+                    {
+                        s2.Add(c);
+                    }
+                    if (s2.Count > 3)
+                    {
+                        continue;
+                    }
+
+                    for (int n = m + 1; n < lstColIndex.Count; n++)
+                    {
+                        SudokuItem item3 = Items[lstColIndex[n]];
+                        int[] c3 = item3.GetCandidateNumbers();
+                        HashSet<int> s3 = new HashSet<int>(s2);
+                        foreach (int c in c3)
+                        {
+                            s3.Add(c);
+                        }
+                        if (s3.Count > 3)
+                        {
+                            continue;
+                        }
+
+                        // 清楚行中的候选项
+                        for (int k = 0; k < n2; k++)
+                        {
+                            if (k == lstColIndex[l] || k == lstColIndex[m] || k == lstColIndex[n])
+                            {
+                                continue;
+                            }
+                            SudokuItem item = Items[k];
+                            if (item.value == 0)
+                            {
+                                rtVal |= item.ClearCandidates(s3);
+                            }
+                        }
+
+                        // 清楚区块中的候选项
+                        SudokuBlock block = Sudoku.GetBlock(item1.i, item1.j);
+                        SudokuBlock block2 = Sudoku.GetBlock(item2.i, item2.j);
+                        SudokuBlock block3 = Sudoku.GetBlock(item3.i, item3.j);
+                        if (block == block2 && block2 == block3)
+                        {
+                            rtVal |= block.ClearCandidates(s3, new SudokuItem[] { item1, item2, item3 });
+                        }
+
+                        if (rtVal)
+                        {
+                            return rtVal;
+                        }
+                    }
+                }
+            }
+
             return rtVal;
         }
 

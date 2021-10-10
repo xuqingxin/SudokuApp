@@ -35,7 +35,7 @@ namespace Sudoku
             {
                 ImageUtility.RGB2Gray(ref bmp);
             }
-            ImageUtility.Gray2Mono(ref bmp);
+            ImageUtility.Gray2Mono(ref bmp, 60);
             BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
             int length = bmpData.Stride * bmp.Height;
             byte[] byteData = new byte[length];
