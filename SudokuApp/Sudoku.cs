@@ -41,12 +41,12 @@ namespace Sudoku
             {
                 for (int bi = 0; bi < Blocks[bj].Length; bi++)
                 {
-                    SudokuBlock block = Blocks[bi][bj];
+                    SudokuBlock block = Blocks[bj][bi];
                     for (int k = 0; k < block.Items.Length; k++)
                     {
                         int i = k % n;
                         int j = k / n;
-                        block.Items[k] = Items[bi * n + i][bj * n + j];
+                        block.Items[k] = Items[bj * n + j][bi * n + i];
                     }
                 }
             }

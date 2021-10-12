@@ -110,11 +110,14 @@ namespace Sudoku
         public int[] GetCandidateNumbers()
         {
             List<int> lst = new List<int>();
-            for (int i = 1; i < Candidates.Length; i++)
+            if (value == 0)
             {
-                if (Candidates[i])
+                for (int i = 1; i < Candidates.Length; i++)
                 {
-                    lst.Add(i);
+                    if (Candidates[i])
+                    {
+                        lst.Add(i);
+                    }
                 }
             }
             return lst.ToArray();

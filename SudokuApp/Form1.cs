@@ -238,12 +238,19 @@ namespace Sudoku
 
         private void btnGo_Click(object sender, EventArgs e)
         {
-            int i = Convert.ToInt32(txtI.Text);
-            int j = Convert.ToInt32(txtJ.Text);
-            SudokuItem item = _sudoku.GetItem(i, j);
-            if (item != null)
+            try
             {
-                txtCandidates.Text = string.Join(",", item.GetCandidateNumbers());
+                int i = Convert.ToInt32(txtI.Text);
+                int j = Convert.ToInt32(txtJ.Text);
+                SudokuItem item = _sudoku.GetItem(i, j);
+                if (item != null)
+                {
+                    txtCandidates.Text = string.Join(",", item.GetCandidateNumbers());
+                }
+            }
+            catch (Exception)
+            {
+                //
             }
         }
     }
