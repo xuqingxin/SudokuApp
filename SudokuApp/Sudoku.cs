@@ -19,35 +19,34 @@ namespace Sudoku
             this.n2 = n * n;
 
             Items = new SudokuItem[n2][];
-            for (int i = 0; i < Items.Length; i++)
+            for (int j = 0; j < Items.Length; j++)
             {
-                Items[i] = new SudokuItem[n2];
-                for (int j = 0; j < Items[i].Length; j++)
+                Items[j] = new SudokuItem[n2];
+                for (int i = 0; i < Items[j].Length; i++)
                 {
-                    Items[i][j] = new SudokuItem(this, n, i, j, 0);
+                    Items[j][i] = new SudokuItem(this, n, i, j, 0);
                 }
             }
 
             Blocks = new SudokuBlock[n][];
-            for (int i = 0; i < Blocks.Length; i++)
+            for (int j = 0; j < Blocks.Length; j++)
             {
-                Blocks[i] = new SudokuBlock[n];
-                for (int j = 0; j < Blocks[i].Length; j++)
+                Blocks[j] = new SudokuBlock[n];
+                for (int i = 0; i < Blocks[j].Length; i++)
                 {
-                    Blocks[i][j] = new SudokuBlock(this, n, i, j);
+                    Blocks[j][i] = new SudokuBlock(this, n, i, j);
                 }
             }
-            for (int i = 0; i < Blocks.Length; i++)
+            for (int bj = 0; bj < Blocks.Length; bj++)
             {
-                for (int j = 0; j < Blocks[i].Length; j++)
+                for (int bi = 0; bi < Blocks[bj].Length; bi++)
                 {
-                    SudokuBlock block = Blocks[i][j];
+                    SudokuBlock block = Blocks[bi][bj];
                     for (int k = 0; k < block.Items.Length; k++)
                     {
-                        for (int l = 0; l < block.Items[k].Length; l++)
-                        {
-                            block.Items[l][k] = Items[i * n + k][j * n + l];
-                        }
+                        int i = k % n;
+                        int j = k / n;
+                        block.Items[k] = Items[bi * n + i][bj * n + j];
                     }
                 }
             }
@@ -55,20 +54,20 @@ namespace Sudoku
             Rows = new SudokuRow[n2];
             for (int j = 0; j < n2; j++)
             {
-                Rows[j] = new SudokuRow(n2, j, this);
+                Rows[j] = new SudokuRow(this, n, j);
                 for (int i = 0; i < Rows[j].Items.Length; i++)
                 {
-                    Rows[j].Items[i] = Items[i][j];
+                    Rows[j].Items[i] = Items[j][i];
                 }
             }
 
             Columns = new SudokuColumn[n2];
             for (int i = 0; i < n2; i++)
             {
-                Columns[i] = new SudokuColumn(n2, i, this);
+                Columns[i] = new SudokuColumn(this, n, i);
                 for (int j = 0; j < Columns[i].Items.Length; j++)
                 {
-                    Columns[i].Items[j] = Items[i][j];
+                    Columns[i].Items[j] = Items[j][i];
                 }
             }
         }
@@ -85,17 +84,6 @@ namespace Sudoku
 
         public SudokuColumn[] Columns { get; }
 
-        public bool Init(int i, int j, int v)
-        {
-            SudokuItem item = GetItem(i, j);
-            if (item != null && v >= 1 && v <= n2)
-            {
-                item.SetValue(v);
-                return true;
-            }
-            return false;
-        }
-
         public SudokuItem GetItem(int i, int j)
         {
             if (i < 0 || i >= n * n || j < 0 || j >= n * n)
@@ -103,7 +91,7 @@ namespace Sudoku
                 return null;
             }
 
-            return Items[i][j];
+            return Items[j][i];
         }
 
         public SudokuBlock GetBlock(int i, int j)
@@ -113,23 +101,19 @@ namespace Sudoku
                 return null;
             }
 
-            return Blocks[i / n][j / n];
-        }
-
-        public static int GetSum(int n)
-        {
-            return (1 + n) * n / 2;
+            return Blocks[j / n][i / n];
         }
 
         public bool GetNextNumber()
         {
-            return TryRows() || TryColumns() || TryBlocks() || TryNRows() || TryNColumns();
+            return TryRows() || TryColumns() || TryBlocks();
         }
 
         public bool GetNextNumber2()
         {
             while (GetNextNumber())
             {
+                // Do nothing
             }
             return false;
         }
@@ -179,166 +163,6 @@ namespace Sudoku
             return rtVal;
         }
 
-        public bool TryNRows()
-        {
-            bool rtVal = false;
-            for (int i = 0; i < n; i++)
-            {
-                rtVal |= TryNRows(i);
-                if (rtVal)
-                {
-                    return rtVal;
-                }
-            }
-            return rtVal;
-        }
-
-        public bool TryNRows(int i)
-        {
-            bool rtVal = false;
-            SudokuBlock[] blocks = new SudokuBlock[n];
-            for (int k = 0; k < n; k++)
-            {
-                blocks[k] = Blocks[k][i];
-            }
-            SudokuRow[] rows = new SudokuRow[n];
-            for (int k = 0; k < n; k++)
-            {
-                rows[k] = Rows[i * n + k];
-            }
-            for (int k = 1; k <= n2; k++)
-            {
-                rtVal |= TryNRowsWithValue(blocks, rows, k);
-                if (rtVal)
-                {
-                    return rtVal;
-                }
-            }
-            return rtVal;
-        }
-
-        public bool TryNRowsWithValue(SudokuBlock[] blocks, SudokuRow[] rows, int v)
-        {
-            bool rtVal = false;
-            SudokuItem[] items = new SudokuItem[n];
-            for (int i = 0; i < rows.Length; i++)
-            {
-                items[i] = rows[i].GetItemByValue(v);
-            }
-            int count = items.Count(x => x != null);
-            if (count == n - 1)
-            {
-                int[] blockIndex = new int[n];
-                int rowIndex = 0;
-                for (int i = 0; i < items.Length; i++)
-                {
-                    if (items[i] == null)
-                    {
-                        rowIndex = i;
-                    }
-                    else
-                    {
-                        SudokuBlock tempBlock = GetBlock(items[i].i, items[i].j);
-                        blockIndex[tempBlock.i] = 1;
-                    }
-                }
-                SudokuBlock block = null;
-                for (int i = 0; i < n; i++)
-                {
-                    if (blockIndex[i] == 0)
-                    {
-                        block = blocks[i];
-                        break;
-                    }
-                }
-                if (block.TryRowCompleteWithValue(rowIndex, v))
-                {
-                    rtVal = true;
-                }
-            }
-            return rtVal;
-        }
-
-        public bool TryNColumns()
-        {
-            bool rtVal = false;
-            for (int j = 0; j < n; j++)
-            {
-                rtVal |= TryNColumns(j);
-                if (rtVal)
-                {
-                    return rtVal;
-                }
-            }
-            return rtVal;
-        }
-
-        public bool TryNColumns(int j)
-        {
-            bool rtVal = false;
-            SudokuBlock[] blocks = new SudokuBlock[n];
-            for (int k = 0; k < n; k++)
-            {
-                blocks[k] = Blocks[j][k];
-            }
-            SudokuColumn[] columns = new SudokuColumn[n];
-            for (int k = 0; k < n; k++)
-            {
-                columns[k] = Columns[j * n + k];
-            }
-            for (int k = 1; k <= n2; k++)
-            {
-                rtVal |= TryNColumnsWithValue(blocks, columns, k);
-                if (rtVal)
-                {
-                    return rtVal;
-                }
-            }
-            return rtVal;
-        }
-
-        public bool TryNColumnsWithValue(SudokuBlock[] blocks, SudokuColumn[] columns, int v)
-        {
-            bool rtVal = false;
-            SudokuItem[] items = new SudokuItem[n];
-            for (int i = 0; i < columns.Length; i++)
-            {
-                items[i] = columns[i].GetItemByValue(v);
-            }
-            int count = items.Count(x => x != null);
-            if (count == n - 1)
-            {
-                int[] blockIndex = new int[n];
-                int columnIndex = 0;
-                for (int i = 0; i < items.Length; i++)
-                {
-                    if (items[i] == null)
-                    {
-                        columnIndex = i;
-                    }
-                    else
-                    {
-                        SudokuBlock tempBlock = GetBlock(items[i].i, items[i].j);
-                        blockIndex[tempBlock.j] = 1;
-                    }
-                }
-                SudokuBlock block = null;
-                for (int i = 0; i < n; i++)
-                {
-                    if (blockIndex[i] == 0)
-                    {
-                        block = blocks[i];
-                        break;
-                    }
-                }
-                if (block.TryColumnCompleteWithValue(columnIndex, v))
-                {
-                    rtVal = true;
-                }
-            }
-            return rtVal;
-        }
-
         public bool IsComplete()
         {
             bool rtVal = false;
@@ -350,19 +174,19 @@ namespace Sudoku
         public string Print2String()
         {
             StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < n2; i++)
+            for (int j = 0; j < n2; j++)
             {
-                for (int j = 0; j < n2; j++)
+                for (int i = 0; i < n2; i++)
                 {
                     string strNumber = Items[j][i].value == 0 ? " " : Items[j][i].value.ToString();
                     builder.Append($"{strNumber:D1} ");
-                    if (j > 0 && (j + 1) % n == 0 && j < n2 - 1)
+                    if (i > 0 && (i + 1) % n == 0 && i < n2 - 1)
                     {
                         builder.Append("| ");
                     }
                 }
                 builder.AppendLine();
-                if (i > 0 && (i + 1) % n == 0 && i < n2 - 1)
+                if (j > 0 && (j + 1) % n == 0 && j < n2 - 1)
                 {
                     builder.AppendLine("---------------------");
                 }
@@ -374,9 +198,9 @@ namespace Sudoku
         public string Print2StringBy0()
         {
             StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < n2; i++)
+            for (int j = 0; j < n2; j++)
             {
-                for (int j = 0; j < n2; j++)
+                for (int i = 0; i < n2; i++)
                 {
                     builder.Append($"{Items[j][i].value} ");
                 }
@@ -393,11 +217,11 @@ namespace Sudoku
 
         public void Reset()
         {
-            for (int i = 0; i < n2; i++)
+            for (int j = 0; j < n2; j++)
             {
-                for (int j = 0; j < n2; j++)
+                for (int i = 0; i < n2; i++)
                 {
-                    Items[i][j].Reset();
+                    Items[j][i].Reset();
                 }
             }
         }
@@ -412,16 +236,16 @@ namespace Sudoku
                 {
                     return false;
                 }
-                for (int i = 0; i < n2; i++)
+                for (int j = 0; j < n2; j++)
                 {
-                    string[] parts = lines[i].Split(' ');
+                    string[] parts = lines[j].Split(' ');
                     if (parts.Length < n2)
                     {
                         return false;
                     }
-                    for (int j = 0; j < n2; j++)
+                    for (int i = 0; i < n2; i++)
                     {
-                        if (int.TryParse(parts[j], out int v) && v > 0)
+                        if (int.TryParse(parts[i], out int v) && v > 0)
                         {
                             Items[j][i].SetValue(v);
                         }

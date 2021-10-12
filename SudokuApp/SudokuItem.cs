@@ -42,14 +42,15 @@ namespace Sudoku
             ClearRowColumnBlockCandidates(value);
         }
 
-        public void SetCandidate(int c)
+        public bool ClearCandidate(int c)
         {
-            Candidates[c] = true;
-        }
-
-        public void ClearCandidate(int c)
-        {
-            Candidates[c] = false;
+            bool rtVal = false;
+            if (Candidates[c])
+            {
+                Candidates[c] = false;
+                rtVal = true;
+            }
+            return rtVal;
         }
 
         public bool ClearCandidates(IEnumerable<int> lst)
@@ -74,18 +75,26 @@ namespace Sudoku
             }
         }
 
+        public bool ClearCandidatesExcept(IEnumerable<int> lst)
+        {
+            bool rtVal = false;
+            for (int i = 1; i < Candidates.Length; i++)
+            {
+                if (Candidates[i] && !lst.Contains(i))
+                {
+                    Candidates[i] = false;
+                    rtVal = true;
+                }
+            }
+            return rtVal;
+        }
+
         public void ClearRowColumnBlockCandidates(int v)
         {
-            for (int k = 0; k < n * n; k++)
-            {
-                SudokuItem item = Sudoku.GetItem(k, j);
-                item.ClearCandidate(v);
-            }
-            for (int k = 0; k < n * n; k++)
-            {
-                SudokuItem item = Sudoku.GetItem(i, k);
-                item.ClearCandidate(v);
-            }
+            SudokuRow row = Sudoku.Rows[j];
+            row.ClearCandidate(v);
+            SudokuColumn col = Sudoku.Columns[i];
+            col.ClearCandidate(v);
             SudokuBlock block = Sudoku.GetBlock(i, j);
             block.ClearCandidate(v);
         }

@@ -15,7 +15,7 @@ namespace Sudoku
 {
     public partial class Form1 : Form
     {
-        private Sudoku sudoku = new Sudoku();
+        private Sudoku _sudoku = new Sudoku();
 
         public Form1()
         {
@@ -35,7 +35,7 @@ namespace Sudoku
             {
                 ImageUtility.RGB2Gray(ref bmp);
             }
-            ImageUtility.Gray2Mono(ref bmp, 60);
+            ImageUtility.Gray2Mono(ref bmp, 30);
             BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
             int length = bmpData.Stride * bmp.Height;
             byte[] byteData = new byte[length];
@@ -93,7 +93,7 @@ namespace Sudoku
             int[] rowKeys = rowData.Keys.ToArray();
             for (int i = 0; i < rowKeys.Length; i++)
             {
-                if (rowData[rowKeys[i]].Count < rowAvg)
+                if (rowData[rowKeys[i]].Count < rowAvg / 2)
                 {
                     rowData.Remove(rowKeys[i]);
                 }
@@ -130,7 +130,7 @@ namespace Sudoku
             int[] colKeys = colData.Keys.ToArray();
             for (int i = 0; i < colKeys.Length; i++)
             {
-                if (colData[colKeys[i]].Count < colAvg)
+                if (colData[colKeys[i]].Count < colAvg / 2)
                 {
                     colData.Remove(colKeys[i]);
                 }
@@ -159,7 +159,7 @@ namespace Sudoku
             }
             int dy = dys.Max() + margin;
 
-            sudoku.Reset();
+            _sudoku.Reset();
             Bitmap img = bmp;
             for (int j = 0; j < dys.Length; j++)
             {
@@ -173,7 +173,7 @@ namespace Sudoku
                     //int value = OcrUtility.Instance.OCRByCmd(filename);
                     if (value > 0)
                     {
-                        sudoku.GetItem(i, j).SetValue(value);
+                        _sudoku.GetItem(i, j).SetValue(value);
                     }
                     else if (value == 0)
                     {
@@ -183,20 +183,26 @@ namespace Sudoku
             }
             img.Dispose();
 
-            sudoku.Print();
-            sudoku.SaveBy0("Sudoku.txt");
+            _sudoku.Print();
+            _sudoku.SaveBy0("Sudoku.txt");
+
+            string txt = _sudoku.Print2String();
+            richTextBox.Text = txt;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            bool rtVal = sudoku.GetNextNumber();
+            bool rtVal = _sudoku.GetNextNumber();
             if (rtVal)
             {
-                sudoku.Print();
+                _sudoku.Print();
+                string txt = _sudoku.Print2String();
+                richTextBox.Text = txt;
+                btnGo_Click(null, null);
             }
             else
             {
-                if (sudoku.IsComplete())
+                if (_sudoku.IsComplete())
                 {
                     Console.WriteLine("Done");
                 }
@@ -205,9 +211,11 @@ namespace Sudoku
 
         private void button3_Click(object sender, EventArgs e)
         {
-            bool rtVal = sudoku.GetNextNumber2();
-            sudoku.Print();
-            if (sudoku.IsComplete())
+            bool rtVal = _sudoku.GetNextNumber2();
+            _sudoku.Print();
+            string txt = _sudoku.Print2String();
+            richTextBox.Text = txt;
+            if (_sudoku.IsComplete())
             {
                 Console.WriteLine("Done");
             }
@@ -215,15 +223,28 @@ namespace Sudoku
 
         private void button4_Click(object sender, EventArgs e)
         {
-            if (sudoku.Load("Sudoku.txt"))
+            if (_sudoku.Load("Sudoku.txt"))
             {
-                sudoku.Print();
+                _sudoku.Print();
+                string txt = _sudoku.Print2String();
+                richTextBox.Text = txt;
             }
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             OcrUtility.Instance.Uninit();
+        }
+
+        private void btnGo_Click(object sender, EventArgs e)
+        {
+            int i = Convert.ToInt32(txtI.Text);
+            int j = Convert.ToInt32(txtJ.Text);
+            SudokuItem item = _sudoku.GetItem(i, j);
+            if (item != null)
+            {
+                txtCandidates.Text = string.Join(",", item.GetCandidateNumbers());
+            }
         }
     }
 }
