@@ -8,7 +8,7 @@ namespace Sudoku
 {
     public class SudokuRow : SudokuCollection
     {
-        public SudokuRow(Sudoku sudoku, int index) : this(sudoku, 3, index)
+        public SudokuRow(Sudoku sudoku, int index) : this(sudoku, sudoku.n, index)
         {
         }
 
